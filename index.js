@@ -22,7 +22,6 @@ rl.on('close', function () {
 
 const ask = (ques, def) => new Promise(res => {
     rl.question(def ? `${ques} (Y to set default: ${def}):` : ques, ans => {
-        console.log({ ques, def, ans });
         res(def && (ans === '' || ans.toLowerCase() == 'y') ? def : ans);
     });
 });
@@ -56,10 +55,8 @@ const getAllEnvProps = function (dirPath, arrayOfFiles) {
 
     if (envsExtracted.length > 0) {
         const isManualPopulate = await ask(`Do you want to continue adding values for env props(Y / N) ? `);
-        console.log({ isManualPopulate });
         let envs = [];
         for (const envKey of envsExtracted) {
-            console.log({ envKey });
             const envValue = isManualPopulate.toLowerCase() === 'y' ? await ask(`${envKey}=`) : '';
             envs.push(`${envKey}=${envValue}\n`);
         }
