@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
+const optionalArgs = process.argv.slice(2);
+const isSilentModeEnabled = optionalArgs.includes('--silent');
+isSilentModeEnabled && (console.log = () => { });
+
 const PWD = process.cwd();
 let _config = { exclude: ['/node_modules', '/coverage'] };
 
@@ -14,16 +18,20 @@ if (fs.existsSync(PWD + '/env-gen-config.js')) {
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 let envGenPath = PWD + '/';
 let envScanPath = PWD + '/';
+let envFound = [];
 
 rl.on('close', function () {
-    console.log(`\n.env created under ${envGenPath} !!`);
+    !!envFound.length && console.log(`\n.env created under ${envGenPath} !!`);
     process.exit(0);
 });
 
-const ask = (ques, def) => new Promise(res => {
-    rl.question(def ? `${ques} (Y to set default: ${def}):` : ques, ans => {
-        res(def && (ans === '' || ans.toLowerCase() == 'y') ? def : ans);
-    });
+const ask = (ques, def = '') => new Promise(res => {
+    if (isSilentModeEnabled)
+        res(def);
+    else
+        rl.question(def ? `${ques} (Y to set default: ${def}):` : ques, ans => {
+            res(def && (ans === '' || ans.toLowerCase() == 'y') ? def : ans);
+        });
 });
 
 let totalScannedFiles = 0;
@@ -50,13 +58,13 @@ const getAllEnvProps = function (dirPath, arrayOfFiles) {
 (async () => {
     envScanPath = await ask(`Path to scan files for process.env.* properties references `, envScanPath);
     console.log(`Excluded file paths - ${_config?.exclude} !!`);
-    const envsExtracted = getAllEnvProps(envScanPath);
-    console.log(`Total ${envsExtracted.length} env properties references on scanning ${totalScannedFiles} .js files found under ${envScanPath} path !!`);
+    envFound = getAllEnvProps(envScanPath);
+    console.log(`Total ${envFound.length} env properties references on scanning ${totalScannedFiles} .js files found under ${envScanPath} path !!`);
 
-    if (envsExtracted.length > 0) {
-        const isManualPopulate = await ask(`Do you want to continue adding values for env props(Y / N) ? `);
+    if (envFound.length > 0) {
+        const isManualPopulate = await ask(`Do you want to continue assigning values for env props(Y / N) ? `);
         let envs = [];
-        for (const envKey of envsExtracted) {
+        for (const envKey of envFound) {
             const envValue = isManualPopulate.toLowerCase() === 'y' ? await ask(`${envKey}=`) : '';
             envs.push(`${envKey}=${envValue}\n`);
         }
