@@ -1,4 +1,4 @@
-# env-gen 
+# env-gen [![Node.js Package](https://github.com/tamdilip/env-gen/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/tamdilip/env-gen/actions/workflows/npm-publish.yml)
 
 `.env` file generator by extracting all environment variables referenced in node js project through `process.env.*`
 
